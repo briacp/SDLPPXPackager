@@ -16,8 +16,13 @@
  **************************************************************************/
 package net.briac.sdlppx;
 
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.JFileChooser;
@@ -56,12 +61,45 @@ public class SDLPPXPackagerWindow extends javax.swing.JFrame {
     private void initComponents() {
 
         sdlppxFile = new javax.swing.JTextField();
+        sdlppxFile.setDropTarget(new DropTarget() {
+            @SuppressWarnings("unchecked")
+            public synchronized void drop(DropTargetDropEvent evt) {
+                try {
+                    evt.acceptDrop(DnDConstants.ACTION_COPY);
+                    List<File> droppedFiles = (List<File>) evt
+                    .getTransferable().getTransferData(
+                        DataFlavor.javaFileListFlavor);
+                    for (File file : droppedFiles) {
+                        sdlppxFile.setText(file.getAbsolutePath());
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
         sdlppxButton = new javax.swing.JButton();
         sdlppxLabel = new javax.swing.JLabel();
         targetLabel = new javax.swing.JLabel();
         targetDir = new javax.swing.JTextField();
+        targetDir.setDropTarget(new DropTarget() {
+            @SuppressWarnings("unchecked")
+            public synchronized void drop(DropTargetDropEvent evt) {
+                try {
+                    evt.acceptDrop(DnDConstants.ACTION_COPY);
+                    List<File> droppedFiles = (List<File>) evt
+                    .getTransferable().getTransferData(
+                        DataFlavor.javaFileListFlavor);
+                    for (File file : droppedFiles) {
+                        targetDir.setText(file.getAbsolutePath());
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
         targetButton = new javax.swing.JButton();
         createPackageButton = new javax.swing.JButton();
+        statusLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle(bundle.getString("SDLPPX_TITLE")); // NOI18N
@@ -102,23 +140,23 @@ public class SDLPPXPackagerWindow extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(targetLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(sdlppxLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(targetLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(targetDir))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(targetDir, javax.swing.GroupLayout.DEFAULT_SIZE, 444, Short.MAX_VALUE)
+                            .addComponent(sdlppxFile))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(sdlppxButton, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
+                            .addComponent(targetButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(sdlppxLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(sdlppxFile, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(targetButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(sdlppxButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(createPackageButton)
+                        .addComponent(statusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(createPackageButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -134,12 +172,15 @@ public class SDLPPXPackagerWindow extends javax.swing.JFrame {
                     .addComponent(targetLabel)
                     .addComponent(targetDir, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(targetButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(createPackageButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(createPackageButton, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(statusLabel, javax.swing.GroupLayout.Alignment.TRAILING))
+                .addContainerGap())
         );
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void sdlppxButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sdlppxButtonActionPerformed
@@ -238,6 +279,7 @@ public class SDLPPXPackagerWindow extends javax.swing.JFrame {
     private javax.swing.JButton sdlppxButton;
     private javax.swing.JTextField sdlppxFile;
     private javax.swing.JLabel sdlppxLabel;
+    private javax.swing.JLabel statusLabel;
     private javax.swing.JButton targetButton;
     private javax.swing.JTextField targetDir;
     private javax.swing.JLabel targetLabel;
