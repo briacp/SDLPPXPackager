@@ -15,8 +15,8 @@ This utility is used to create Trados Return Package files (`SDLRPX`) from a `SD
 
 ## Installation
 
-* To use the GUI: `java -jar SDLPPXPackager-1.0.0.jar`
-* To use in CLI: `java -jar SDLPPXPackager-1.0.0.jar /path/to/project.sdlppx /path/to/target/files/`
+* To use the GUI: `java -jar SDLPPXPackager-1.0.1.jar`
+* To use in CLI: `java -jar SDLPPXPackager-1.0.1.jar /path/to/project.sdlppx /path/to/target/files/`
 
 ## See Also
 
