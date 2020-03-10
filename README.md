@@ -1,6 +1,7 @@
 # SDLPPX Packager
 
 This utility is used to create Trados Return Package files (`SDLRPX`) from a `SDLPPX` file. Of course, it assumes you already have translated the content of the `SDLXLIFF` files inside.
+It can also extract the source files inside a `SDLPPX` project and copy them to a `source/` directory (in an OmegaT project, for instance). 
 
 ![alt text](screenshot.png "SDLPPX Packager Screenshot")
 

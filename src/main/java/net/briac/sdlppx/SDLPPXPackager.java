@@ -16,6 +16,7 @@
  **************************************************************************/
 package net.briac.sdlppx;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,6 +62,9 @@ import org.xml.sax.SAXException;
  *
  */
 public class SDLPPXPackager {
+    private static final String TARGET_DIR = "target";
+    private static final String SOURCE_DIR = "source";
+
     private static final Logger LOGGER = Logger.getLogger(SDLPPXPackager.class.getName());
 
     private static final String ATTRIBUTE_PACKAGE_TYPE = "PackageType";
@@ -70,17 +74,17 @@ public class SDLPPXPackager {
     }
 
     private final Path sdlPpx;
-    private final Path targetDir;
+    private final Path projectDir;
     private String targetLanguage;
 
-    public SDLPPXPackager(String filename, String targetDir) throws FileNotFoundException {
+    public SDLPPXPackager(String filename, String projectDir) throws FileNotFoundException {
         this.sdlPpx = Paths.get(filename);
-        this.targetDir = Paths.get(targetDir);
+        this.projectDir = Paths.get(projectDir);
         if (!sdlPpx.toFile().exists()) {
             throw new FileNotFoundException("SDLPPX file does not exist.");
         }
-        if (!this.targetDir.toFile().exists()) {
-            throw new FileNotFoundException("Target directory does not exist.");
+        if (!this.projectDir.toFile().exists()) {
+            throw new FileNotFoundException("Project directory does not exist.");
         }
 
     }
@@ -92,6 +96,39 @@ public class SDLPPXPackager {
         } else {
             new SDLPPXPackager(args[0], args[1]).updateSdlppx();
         }
+    }
+
+    public boolean extractSource() throws Exception {
+
+        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.sdlproj");
+
+        try (FileSystem zipfs = FileSystems.newFileSystem(sdlPpx, null)) {
+            Stream<Path> sdlProjStream = Files.find(zipfs.getRootDirectories().iterator().next(), 1,
+                    (path, basicFileAttributes) -> matcher.matches(path));
+            Path sdlProj = sdlProjStream.findFirst().get();
+            sdlProjStream.close();
+
+            LOGGER.log(Level.INFO, "SDLProj file: {0}", sdlProj);
+            parseSDLProj(sdlProj, false);
+
+            File sourceDir = new File(projectDir.toFile().getAbsolutePath(), SOURCE_DIR);
+            sourceDir.mkdirs();
+
+            // We assume the target directories are always flat with sdlxliff?
+            Files.find(zipfs.getPath(targetLanguage), 1,
+                    (path, basicFileAttributes) -> path.getFileName().toString().endsWith(".sdlxliff"))
+                    .forEach(actionPath -> {
+                        Path source = Paths.get(sourceDir.getAbsolutePath(), actionPath.getFileName().toString());
+                        LOGGER.log(Level.INFO, "Copy {0} > {1}", new Object[] { actionPath, source });
+                        try {
+                            Files.copy(actionPath, source, StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+        }
+
+        return true;
     }
 
     public boolean updateSdlppx() throws IOException, TransformerConfigurationException, ParserConfigurationException,
@@ -112,19 +149,21 @@ public class SDLPPXPackager {
             sdlProjStream.close();
 
             LOGGER.log(Level.INFO, "SDLProj file: {0}", sdlProj);
-            isUpdated = parseSDLProj(sdlProj);
-            
+            isUpdated = parseSDLProj(sdlProj, true);
+
             // We assume the target directories are always flat with sdlxliff?
-            Files.find(zipfs.getPath(targetLanguage), 1, (path, basicFileAttributes) -> path.getFileName().toString().endsWith(".sdlxliff"))
-                 .forEach(actionPath -> {
-                     Path source = Paths.get(targetDir.toFile().getAbsolutePath(), actionPath.getFileName().toString());
-                     LOGGER.log(Level.INFO, "Replace {0} > {1}", new Object[] {source, actionPath });
-                     try {
-                        Files.copy(source, actionPath, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                 });
+            Files.find(zipfs.getPath(targetLanguage), 1,
+                    (path, basicFileAttributes) -> path.getFileName().toString().endsWith(".sdlxliff"))
+                    .forEach(actionPath -> {
+                        Path source = Paths.get(projectDir.toFile().getAbsolutePath(), TARGET_DIR,
+                                actionPath.getFileName().toString());
+                        LOGGER.log(Level.INFO, "Replace {0} > {1}", new Object[] { source, actionPath });
+                        try {
+                            Files.copy(source, actionPath, StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
         }
         if (isUpdated) {
             Path sdlRpx = sdlPpx.resolveSibling(sdlPpx.getFileName().toString().replaceAll("\\.sdlppx$", ".sdlrpx"));
@@ -136,8 +175,9 @@ public class SDLPPXPackager {
         return false;
     }
 
-    private boolean parseSDLProj(final Path sdlProj) throws ParserConfigurationException, SAXException,
-            TransformerConfigurationException, TransformerFactoryConfigurationError, IOException, TransformerException {
+    private boolean parseSDLProj(final Path sdlProj, final boolean doUpdate)
+            throws ParserConfigurationException, SAXException, TransformerConfigurationException,
+            TransformerFactoryConfigurationError, IOException, TransformerException {
 
         final DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
@@ -152,13 +192,16 @@ public class SDLPPXPackager {
 
         // Language code, obviously we don't deal with multiple target languages.
         // /PackageProject/LanguageDirections/LanguageDirection/@TargetLanguageCode="fr-FR"
-        targetLanguage = ((Element) ((Element) ((Element) doc
-                .getElementsByTagName("PackageProject").item(0))
-                .getElementsByTagName("LanguageDirections").item(0))
-                .getElementsByTagName("LanguageDirection").item(0)).getAttribute("TargetLanguageCode");
-        
+        targetLanguage = ((Element) ((Element) ((Element) doc.getElementsByTagName("PackageProject").item(0))
+                .getElementsByTagName("LanguageDirections").item(0)).getElementsByTagName("LanguageDirection").item(0))
+                        .getAttribute("TargetLanguageCode");
+
         LOGGER.log(Level.INFO, "Target Language: {0}", targetLanguage);
-        
+
+        if (!doUpdate) {
+            return false;
+        }
+
         final Node attrPackageType = doc.getDocumentElement().getAttributeNode(ATTRIBUTE_PACKAGE_TYPE);
         final PackageTypes packageType = PackageTypes.valueOf(attrPackageType.getTextContent());
         switch (packageType) {
@@ -174,7 +217,6 @@ public class SDLPPXPackager {
         }
 
         return false;
-
     }
 
     private void updateDoc(final Path sdlProj, final Document doc) throws TransformerFactoryConfigurationError,

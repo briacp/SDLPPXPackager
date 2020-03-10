@@ -46,7 +46,13 @@
                       </Group>
                   </Group>
                   <Group type="102" attributes="0">
-                      <Component id="statusLabel" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="statusLabel" max="32767" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              <Component id="extractSourceButton" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="createPackageButton" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -72,7 +78,10 @@
               </Group>
               <EmptySpace pref="29" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="createPackageButton" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="1" groupAlignment="3" attributes="0">
+                      <Component id="createPackageButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="extractSourceButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Component id="statusLabel" alignment="1" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -82,9 +91,6 @@
   </Layout>
   <SubComponents>
     <Component class="javax.swing.JTextField" name="sdlppxFile">
-      <Properties>
-        <Property name="toolTipText" type="java.lang.String" value=""/>
-      </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="sdlppxFile.setDropTarget(new DropTarget() {&#xd;&#xa;    @SuppressWarnings(&quot;unchecked&quot;)&#xd;&#xa;    public synchronized void drop(DropTargetDropEvent evt) {&#xd;&#xa;        try {&#xd;&#xa;            evt.acceptDrop(DnDConstants.ACTION_COPY);&#xd;&#xa;            List&lt;File&gt; droppedFiles = (List&lt;File&gt;) evt&#xd;&#xa;            .getTransferable().getTransferData(&#xd;&#xa;                DataFlavor.javaFileListFlavor);&#xd;&#xa;            for (File file : droppedFiles) {&#xd;&#xa;                sdlppxFile.setText(file.getAbsolutePath());&#xd;&#xa;            }&#xd;&#xa;        } catch (Exception ex) {&#xd;&#xa;            ex.printStackTrace();&#xd;&#xa;        }&#xd;&#xa;    }&#xd;&#xa;});"/>
       </AuxValues>
@@ -109,14 +115,11 @@
     <Component class="javax.swing.JLabel" name="targetLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="net/briac/sdlppx/Strings.properties" key="TARGET_DIRECTORY" replaceFormat="bundle.getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="net/briac/sdlppx/Strings.properties" key="PROJECT_DIRECTORY" replaceFormat="bundle.getString(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="targetDir">
-      <Properties>
-        <Property name="toolTipText" type="java.lang.String" value=""/>
-      </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="targetDir.setDropTarget(new DropTarget() {&#xd;&#xa;    @SuppressWarnings(&quot;unchecked&quot;)&#xd;&#xa;    public synchronized void drop(DropTargetDropEvent evt) {&#xd;&#xa;        try {&#xd;&#xa;            evt.acceptDrop(DnDConstants.ACTION_COPY);&#xd;&#xa;            List&lt;File&gt; droppedFiles = (List&lt;File&gt;) evt&#xd;&#xa;            .getTransferable().getTransferData(&#xd;&#xa;                DataFlavor.javaFileListFlavor);&#xd;&#xa;            for (File file : droppedFiles) {&#xd;&#xa;                targetDir.setText(file.getAbsolutePath());&#xd;&#xa;            }&#xd;&#xa;        } catch (Exception ex) {&#xd;&#xa;            ex.printStackTrace();&#xd;&#xa;        }&#xd;&#xa;    }&#xd;&#xa;});"/>
       </AuxValues>
@@ -124,7 +127,7 @@
     <Component class="javax.swing.JButton" name="targetButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="net/briac/sdlppx/Strings.properties" key="TARGET_DIR_SELECT" replaceFormat="bundle.getString(&quot;{key}&quot;)"/>
+          <ResourceString bundle="net/briac/sdlppx/Strings.properties" key="PROJECT_DIR_SELECT" replaceFormat="bundle.getString(&quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -145,6 +148,19 @@
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="statusLabel">
+    </Component>
+    <Component class="javax.swing.JButton" name="extractSourceButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="net/briac/sdlppx/Strings.properties" key="EXTRACT_BUTTON" replaceFormat="bundle.getString(&quot;{key}&quot;)"/>
+        </Property>
+        <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="net/briac/sdlppx/Strings.properties" key="CONVERT_BUTTON" replaceFormat="bundle.getString(&quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="extractSourceButtonActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>
