@@ -16,12 +16,28 @@ It can also extract the source files inside a `SDLPPX` project and copy them to 
 
 ## Installation
 
-* To use the GUI: `java -jar SDLPPXPackager-1.0.1.jar`
-* To use in CLI: `java -jar SDLPPXPackager-1.0.1.jar /path/to/project.sdlppx /path/to/target/files/`
+* To use the GUI: `java -jar SDLPPXPackager-1.2.0-all.jar`
+* To use in CLI: `java -jar SDLPPXPackager-1.2.0-all.jar --project-dir /path/to/target/files/ /path/to/project.sdlppx`
+
+```
+usage: SDLPPXPackager [options] --project-dir project_dir sdlppx
+ -p,--project-dir <arg>   project directory
+ -r,--return              create the return SDLPRX package (default)
+ -e,--extract             extract source files from the SDLPPX
+
+ -ng,--no-glossary        skip the SDLTB glossary extraction
+ -ns,--no-source          skip the SDLXLIFF sources extraction
+ -nt,--no-tm              skip the SDLTM memory extraction
+ 
+ -G,--gui                 force the GUI mode
+ -h,--help                print this message and exit
+```
 
 ## See Also
 
 This utility was made after watching this video "[Handle SDL Trados Studio Packages without using SDL Trados Studio](https://www.youtube.com/watch?v=a4ZGeAjTl2M)", made by Fi2Pro.
+
+The Glossary and TM extraction is mostly copied from [Trados-Studio-Resource-Converter](https://github.com/TomasoAlbinoni/Trados-Studio-Resource-Converter).
 
 ## License
 
