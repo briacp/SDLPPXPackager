@@ -1,7 +1,10 @@
 # SDLPPX Packager
 
 This utility is used to create Trados Return Package files (`SDLRPX`) from a `SDLPPX` file. Of course, it assumes you already have translated the content of the `SDLXLIFF` files inside.
-It can also extract the source files inside a `SDLPPX` project and copy them to a `source/` directory (in an OmegaT project, for instance). 
+
+It can also extract the source files, translation memories (`SDLTM`) and glossaries (`SDLTB`) located inside a `SDLPPX` project and copy them to a `source/` directory (in an OmegaT project, for instance). 
+
+It can work both in command line or with the GUI. When using the CLI, you can use a sdlppx, sdltm or sdltb file as the source file.
 
 ![alt text](screenshot.png "SDLPPX Packager Screenshot")
 
@@ -17,7 +20,7 @@ It can also extract the source files inside a `SDLPPX` project and copy them to 
 ## Installation
 
 * To use the GUI: `java -jar SDLPPXPackager-1.2.0-all.jar`
-* To use in CLI: `java -jar SDLPPXPackager-1.2.0-all.jar --project-dir /path/to/target/files/ /path/to/project.sdlppx`
+* To use in CLI: `java -jar SDLPPXPackager-1.2.0-all.jar --project-dir /path/to/project/ /path/to/project.sdl[ppx|tm|tb]`
 
 ```
 usage: SDLPPXPackager [options] --project-dir project_dir sdlppx

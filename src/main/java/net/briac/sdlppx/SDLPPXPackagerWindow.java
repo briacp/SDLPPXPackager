@@ -21,18 +21,12 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -59,10 +53,13 @@ public class SDLPPXPackagerWindow extends javax.swing.JFrame {
      */
     // <editor-fold defaultstate="collapsed" desc="Generated
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    @SuppressWarnings("serial")
     private void initComponents() {
 
         sdlppxFile = new javax.swing.JTextField();
         sdlppxFile.setDropTarget(new DropTarget() {
+            private static final long serialVersionUID = 8242053563083931746L;
+
             @SuppressWarnings("unchecked")
             public synchronized void drop(DropTargetDropEvent evt) {
                 try {
@@ -268,8 +265,7 @@ public class SDLPPXPackagerWindow extends javax.swing.JFrame {
         try {
             SDLPPXPackager sp = new SDLPPXPackager(sdlppxFile.getText());
             isOk = sp.updateSdlppx(targetDir.getText());
-        } catch (IOException | ParserConfigurationException | SAXException | TransformerFactoryConfigurationError
-                | TransformerException e) {
+        } catch (Exception e) {
             errMsg = e.getLocalizedMessage();
         }
         if (isOk) {

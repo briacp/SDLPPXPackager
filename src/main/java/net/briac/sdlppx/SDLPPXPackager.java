@@ -56,6 +56,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -75,7 +76,7 @@ public class SDLPPXPackager {
     private static final String SOURCE_DIR = "source";
     private static final String TM_DIR = "tm";
     private static final String GLOSSARY_DIR = "glossary";
-    private static final String HELP_LINE = "SDLPPXPackager [options] --project-dir project_dir sdlppx";
+    private static final String HELP_LINE = "SDLPPXPackager [options] --project-dir project_dir [sdlppx|sdltm|sdltb]";
 
     private final Path sdlPpx;
     private String targetLanguage;
@@ -103,12 +104,12 @@ public class SDLPPXPackager {
     public SDLPPXPackager(String sdlPpx) throws FileNotFoundException {
         this.sdlPpx = Paths.get(sdlPpx);
         if (!this.sdlPpx.toFile().exists()) {
-            LOGGER.log(Level.SEVERE, "SDLPPX file {0} does not exist.", new Object[] {sdlPpx});
+            LOGGER.log(Level.SEVERE, "SDLPPX file {0} does not exist.", new Object[] { sdlPpx });
             throw new FileNotFoundException("SDLPPX file does not exist.");
         }
     }
 
-    public static void main(String[] args) throws Throwable {
+    public static void main(String[] args) {
         // CLI mode
         Options options = new Options();
         options.addOption("h", "help", false, "print this message");
@@ -121,15 +122,22 @@ public class SDLPPXPackager {
         options.addOption("ns", "no-source", false, "skip the SDLXLIFF sources extraction");
 
         CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, args);
-        
+        CommandLine cmd = null;
+        try {
+            cmd = parser.parse(options, args);
+        } catch (ParseException e) {
+            LOGGER.log(Level.SEVERE, "Error parsing the command line", e);
+            System.exit(4);
+        }
+
+        String projectDir = cmd.getOptionValue("p");
         if (args.length == 0 || cmd.hasOption("G")) {
             SDLPPXPackagerWindow win = new SDLPPXPackagerWindow();
-            
+
             if (cmd.hasOption("p")) {
-                win.targetDir.setText(cmd.getOptionValue("p"));
+                win.targetDir.setText(projectDir);
             }
-            if (! cmd.getArgList().isEmpty()) {
+            if (!cmd.getArgList().isEmpty()) {
                 win.sdlppxFile.setText(cmd.getArgList().get(0));
             }
             if (cmd.hasOption("ng")) {
@@ -141,7 +149,7 @@ public class SDLPPXPackager {
             if (cmd.hasOption("ns")) {
                 win.cbSkipSources.setSelected(true);
             }
-                
+
             win.setVisible(true);
             return;
         }
@@ -157,28 +165,62 @@ public class SDLPPXPackager {
             formatter.printHelp(HELP_LINE, options);
             System.exit(3);
         }
-        if (! cmd.hasOption("p")) {
+        if (!cmd.hasOption("p")) {
             System.err.println("Missing required 'project-dir' parameter.");
             formatter.printHelp(HELP_LINE, options);
             System.exit(4);
         }
 
         File f = new File(cmd.getArgList().get(0));
-        SDLPPXPackager sdl = new SDLPPXPackager(f.getAbsolutePath());
-        if (cmd.hasOption("ng")) {
-            sdl.noGlossary = true;
-        }
-        if (cmd.hasOption("nt")) {
-            sdl.noTMX = true;
-        }
-        if (cmd.hasOption("ns")) {
-            sdl.noSource = true;
+
+        SDLPPXPackager sdl = null;
+        try {
+            sdl = new SDLPPXPackager(f.getAbsolutePath());
+        } catch (FileNotFoundException e) {
+            System.exit(5);
         }
 
-        if (cmd.hasOption("extract")) {
-            sdl.extractSource(cmd.getOptionValue("p"));
+        if (f.getName().toLowerCase().endsWith(".sdltb")) {
+            String glossaryPrefix = f.getName().replaceFirst("\\.\\w+$", "");
+                try {
+                    new SDLTBConverter().convertSDLTB(f, new File(projectDir, GLOSSARY_DIR), glossaryPrefix);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error converting the SLTB file", e);
+                    System.exit(5);
+                }
+        } else if (f.getName().toLowerCase().endsWith(".sdltm")) {
+            try {
+                new SDLTMConverter().convertSDLTM(f, new File(projectDir, TM_DIR));
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error converting the SLTM file", e);
+                System.exit(5);
+            }
         } else {
-            sdl.updateSdlppx(cmd.getOptionValue("p"));
+            if (cmd.hasOption("ng")) {
+                sdl.noGlossary = true;
+            }
+            if (cmd.hasOption("nt")) {
+                sdl.noTMX = true;
+            }
+            if (cmd.hasOption("ns")) {
+                sdl.noSource = true;
+            }
+
+            if (cmd.hasOption("extract")) {
+                try {
+                    sdl.extractSource(projectDir);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error extracting source files", e);
+                    System.exit(6);
+                }
+            } else {
+                try {
+                    sdl.updateSdlppx(projectDir);
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Error updating package", e);
+                    System.exit(7);
+                }
+            }
         }
 
     }
@@ -270,11 +312,9 @@ public class SDLPPXPackager {
                 tmpFile.delete();
             }
         }
-
     }
 
-    public boolean updateSdlppx(String projectDir) throws IOException, TransformerConfigurationException,
-            ParserConfigurationException, SAXException, TransformerFactoryConfigurationError, TransformerException {
+    public boolean updateSdlppx(String projectDir) throws Exception {
 
         Map<String, String> env = new HashMap<>();
         env.put("create", "false");
@@ -298,11 +338,12 @@ public class SDLPPXPackager {
                     (path, basicFileAttributes) -> path.getFileName().toString().endsWith(".sdlxliff"))
                     .forEach(actionPath -> {
                         Path source = Paths.get(projectDir, TARGET_DIR, actionPath.getFileName().toString());
-                        LOGGER.log(Level.INFO, "Replace {0} > {1}", new Object[] { source, actionPath });
                         try {
                             Files.copy(source, actionPath, StandardCopyOption.REPLACE_EXISTING);
+                            LOGGER.log(Level.INFO, "Replace {0} > {1}", new Object[] { source, actionPath });
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            LOGGER.log(Level.WARNING, "Could not replace {0} > {1}", new Object[] { source, actionPath });
+                            LOGGER.log(Level.WARNING, "", e);
                         }
                     });
         }
