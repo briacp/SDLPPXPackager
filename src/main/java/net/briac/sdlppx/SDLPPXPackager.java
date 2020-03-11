@@ -28,13 +28,13 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -77,6 +77,11 @@ public class SDLPPXPackager {
     private static final String TM_DIR = "tm";
     private static final String GLOSSARY_DIR = "glossary";
     private static final String HELP_LINE = "SDLPPXPackager [options] --project-dir project_dir [sdlppx|sdltm|sdltb]";
+
+    private static final String EXT_SDLPROJ = ".sdlproj";
+    private static final String EXT_SDLTM = ".sdltm";
+    private static final String EXT_SDLTB = ".sdltb";
+    private static final String EXT_SDLXLIFF = ".sdlxliff";
 
     private final Path sdlPpx;
     private String targetLanguage;
@@ -182,12 +187,12 @@ public class SDLPPXPackager {
 
         if (f.getName().toLowerCase().endsWith(".sdltb")) {
             String glossaryPrefix = f.getName().replaceFirst("\\.\\w+$", "");
-                try {
-                    new SDLTBConverter().convertSDLTB(f, new File(projectDir, GLOSSARY_DIR), glossaryPrefix);
-                } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Error converting the SLTB file", e);
-                    System.exit(5);
-                }
+            try {
+                new SDLTBConverter().convertSDLTB(f, new File(projectDir, GLOSSARY_DIR), glossaryPrefix);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error converting the SLTB file", e);
+                System.exit(5);
+            }
         } else if (f.getName().toLowerCase().endsWith(".sdltm")) {
             try {
                 new SDLTMConverter().convertSDLTM(f, new File(projectDir, TM_DIR));
@@ -208,7 +213,7 @@ public class SDLPPXPackager {
 
             if (cmd.hasOption("extract")) {
                 try {
-                    sdl.extractSource(projectDir);
+                    sdl.extractFiles(projectDir);
                 } catch (Exception e) {
                     LOGGER.log(Level.SEVERE, "Error extracting source files", e);
                     System.exit(6);
@@ -225,45 +230,64 @@ public class SDLPPXPackager {
 
     }
 
-    public boolean extractSource(String projectDir) throws Exception {
+    public boolean extractFiles(String projectDir) throws Exception {
+        boolean allOk = true;
 
-        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.sdlproj");
+        if (!noSource) {
+            try {
+                extractSources(projectDir);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error extracting SDLTM", e);
+                allOk = false;
+            }
+        }
+
+        if (!noTMX) {
+            try {
+                extractTM(projectDir);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error extracting SDLTM", e);
+                allOk = false;
+            }
+        }
+
+        if (!noGlossary) {
+            try {
+                extractGlossaries(projectDir);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error extracting SDLTB", e);
+                allOk = false;
+            }
+        }
+
+        return allOk;
+    }
+
+    private void extractSources(String projectDir) throws IOException, ParserConfigurationException, SAXException,
+            TransformerConfigurationException, TransformerFactoryConfigurationError, TransformerException {
 
         try (FileSystem zipfs = FileSystems.newFileSystem(sdlPpx, null)) {
             Stream<Path> sdlProjStream = Files.find(zipfs.getRootDirectories().iterator().next(), MAX_DEPTH,
-                    (path, basicFileAttributes) -> matcher.matches(path));
-            Path sdlProj = sdlProjStream.findFirst().get();
+                    (path, basicFileAttributes) -> path.toString().toLowerCase().endsWith(EXT_SDLPROJ));
+            Optional<Path> projPath = sdlProjStream.findFirst();
+
+            if (!projPath.isPresent()) {
+                LOGGER.log(Level.WARNING, "Cannot find .sdlproj file inside the .sdlppx");
+                sdlProjStream.close();
+                return;
+            }
+
+            Path sdlProj = projPath.get();
             sdlProjStream.close();
 
             LOGGER.log(Level.INFO, "SDLProj file: {0}", sdlProj);
             parseSDLProj(sdlProj, false);
-
-            if (!noTMX) {
-                try {
-                    extractTM(projectDir);
-                } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Error extracting SDLTM", e);
-                }
-            }
-
-            if (!noGlossary) {
-                try {
-                    extractGlossaries(projectDir);
-                } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, "Error extracting SDLTB", e);
-                }
-            }
-
-            if (noSource) {
-                return true;
-            }
-
             File sourceDir = new File(projectDir, SOURCE_DIR);
             sourceDir.mkdirs();
 
             // We assume the target directories are always flat with sdlxliff?
-            PathMatcher matcher2 = FileSystems.getDefault().getPathMatcher("glob:*.sdlxliff");
-            Files.find(zipfs.getPath(targetLanguage), MAX_DEPTH, (path, basicFileAttributes) -> matcher2.matches(path))
+            Files.find(zipfs.getPath(targetLanguage), MAX_DEPTH,
+                    (path, basicFileAttributes) -> path.toString().toLowerCase().endsWith(EXT_SDLXLIFF))
                     .forEach(actionPath -> {
                         Path source = Paths.get(sourceDir.getAbsolutePath(), actionPath.getFileName().toString());
                         LOGGER.log(Level.INFO, "Copy source file {0} to {1}", new Object[] { actionPath, source });
@@ -274,15 +298,15 @@ public class SDLPPXPackager {
                         }
                     });
         }
-
-        return true;
     }
 
     private void extractGlossaries(String projectDir) throws Exception {
-        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.sdltb");
+
         try (FileSystem zipfs = FileSystems.newFileSystem(sdlPpx, null)) {
-            List<Path> sdltmFiles = Files.find(zipfs.getRootDirectories().iterator().next(), MAX_DEPTH,
-                    (path, basicFileAttributes) -> matcher.matches(path)).collect(Collectors.toList());
+            List<Path> sdltmFiles = Files
+                    .find(zipfs.getRootDirectories().iterator().next(), MAX_DEPTH,
+                            (path, basicFileAttributes) -> path.toString().toLowerCase().endsWith(EXT_SDLTB))
+                    .collect(Collectors.toList());
             LOGGER.log(Level.INFO, "SDLTB file: {0} found", sdltmFiles.size());
             for (Path sdltm : sdltmFiles) {
                 File tmpFile = File.createTempFile("sdlppx_", ".sdltb");
@@ -298,10 +322,11 @@ public class SDLPPXPackager {
     }
 
     private void extractTM(String projectDir) throws Exception {
-        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.sdltm");
         try (FileSystem zipfs = FileSystems.newFileSystem(sdlPpx, null)) {
-            List<Path> sdltmFiles = Files.find(zipfs.getRootDirectories().iterator().next(), 10,
-                    (path, basicFileAttributes) -> matcher.matches(path)).collect(Collectors.toList());
+            List<Path> sdltmFiles = Files
+                    .find(zipfs.getRootDirectories().iterator().next(), 10,
+                            (path, basicFileAttributes) -> path.toString().toLowerCase().endsWith(EXT_SDLTM))
+                    .collect(Collectors.toList());
             LOGGER.log(Level.INFO, "SDLTM file: {0} found", sdltmFiles.size());
             for (Path sdltm : sdltmFiles) {
                 File tmpFile = File.createTempFile("sdlppx_", ".sdltm");
@@ -322,12 +347,19 @@ public class SDLPPXPackager {
         Files.copy(sdlPpx, sdlPpx.resolveSibling(sdlPpx.getFileName().toString() + ".bak"),
                 StandardCopyOption.REPLACE_EXISTING);
 
-        PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.sdlproj");
         boolean isUpdated = false;
         try (FileSystem zipfs = FileSystems.newFileSystem(sdlPpx, null)) {
             Stream<Path> sdlProjStream = Files.find(zipfs.getRootDirectories().iterator().next(), 1,
-                    (path, basicFileAttributes) -> matcher.matches(path));
-            Path sdlProj = sdlProjStream.findFirst().get();
+                    (path, basicFileAttributes) -> path.toString().toLowerCase().endsWith(EXT_SDLPROJ));
+            Optional<Path> projPath = sdlProjStream.findFirst();
+
+            if (!projPath.isPresent()) {
+                LOGGER.log(Level.WARNING, "Cannot find .sdlproj file inside the .sdlppx");
+                sdlProjStream.close();
+                return false;
+            }
+
+            Path sdlProj = projPath.get();
             sdlProjStream.close();
 
             LOGGER.log(Level.INFO, "SDLProj file: {0}", sdlProj);
@@ -342,7 +374,8 @@ public class SDLPPXPackager {
                             Files.copy(source, actionPath, StandardCopyOption.REPLACE_EXISTING);
                             LOGGER.log(Level.INFO, "Replace {0} > {1}", new Object[] { source, actionPath });
                         } catch (IOException e) {
-                            LOGGER.log(Level.WARNING, "Could not replace {0} > {1}", new Object[] { source, actionPath });
+                            LOGGER.log(Level.WARNING, "Could not replace {0} > {1}",
+                                    new Object[] { source, actionPath });
                             LOGGER.log(Level.WARNING, "", e);
                         }
                     });

@@ -285,7 +285,7 @@ public class SDLPPXPackagerWindow extends javax.swing.JFrame {
             sp.setNoTMX(cbSkipTM.isSelected());
             sp.setNoGlossary(cbSkipGlossary.isSelected());
             sp.setNoSource(cbSkipSources.isSelected());
-            isOk = sp.extractSource(targetDir.getText());
+            isOk = sp.extractFiles(targetDir.getText());
         } catch (Exception e) {
             errMsg = e.getLocalizedMessage();
             e.printStackTrace();
