@@ -6,10 +6,8 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
-
 applicationName = 'SDLPPXPackager'
 mainClassName = 'net.briac.sdlppx.SDLPPXPackager'
-version = '1.2.0'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
