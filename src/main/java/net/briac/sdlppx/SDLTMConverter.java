@@ -56,7 +56,7 @@ public class SDLTMConverter {
         tmxDoc.appendChild(tmxEl);
         Element headerEl = tmxDoc.createElement("header");
         headerEl.setAttribute("creationtool", pack.getImplementationTitle());
-        // headerEl.setAttribute("o-tmf",pack.getImplementationTitle());
+        headerEl.setAttribute("o-tmf", "SDLTM");
         headerEl.setAttribute("adminlang", "en-US");
         headerEl.setAttribute("datatype", "plaintext");
         headerEl.setAttribute("creationtoolversion", pack.getImplementationVersion());
