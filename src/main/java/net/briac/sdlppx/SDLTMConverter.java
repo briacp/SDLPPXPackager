@@ -63,6 +63,8 @@ public class SDLTMConverter {
         headerEl.setAttribute("segtype", "sentence");
         tmxEl.appendChild(headerEl);
 
+        Element bodyEl = tmxDoc.createElement("body");
+        tmxEl.appendChild(bodyEl);
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + sdltmFile.toURI());
 
@@ -91,7 +93,7 @@ public class SDLTMConverter {
                         new ByteArrayInputStream(rs.getString("target_segment").getBytes(StandardCharsets.UTF_8)));
                 tu.appendChild(createTuv(tmxDoc, sourceXML));
                 tu.appendChild(createTuv(tmxDoc, targetXML));
-                tmxEl.appendChild(tu);
+                bodyEl.appendChild(tu);
                 tmxCount++;
             }
 
