@@ -125,6 +125,7 @@ public class SDLTMConverter {
 
     private Element createTuv(Document tmxDoc, Document targetXML) {
         Element tuv = tmxDoc.createElement("tuv");
+        Element seg = tmxDoc.createElement("seg");
         Element segment = (Element) targetXML.getElementsByTagName("Segment").item(0);
         tuv.setAttribute("lang", segment.getElementsByTagName("CultureName").item(0).getTextContent());
 
@@ -156,11 +157,12 @@ public class SDLTMConverter {
                     tagEl.setAttribute("x", tagAlignmentAnchor);
                     break;
                 }
-                tuv.appendChild(tagEl);
+                seg.appendChild(tagEl);
             } else if (item.getTagName().equals("Text")) {
-                tuv.appendChild(tmxDoc.createTextNode(item.getElementsByTagName("Value").item(0).getTextContent()));
+                seg.appendChild(tmxDoc.createTextNode(item.getElementsByTagName("Value").item(0).getTextContent()));
             }
         }
+        tuv.appendChild(seg);
 
         return tuv;
     }
