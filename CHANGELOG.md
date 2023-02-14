@@ -5,7 +5,7 @@
 - Changed the GUI layout
 - Support Drag&Drop for both fields
 - Changed FR translation
- 
+
 
 ## [v1.0.0]
 

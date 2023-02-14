@@ -263,8 +263,9 @@ public class SDLPPXPackager {
         return allOk;
     }
 
-    private void extractSources(String projectDir) throws IOException, ParserConfigurationException, SAXException,
-            TransformerConfigurationException, TransformerFactoryConfigurationError, TransformerException {
+    private void extractSources(String projectDir)
+            throws IOException, ParserConfigurationException, SAXException, TransformerConfigurationException,
+            TransformerFactoryConfigurationError, TransformerException {
 
         try (FileSystem zipfs = FileSystems.newFileSystem(sdlPpx, null)) {
             Stream<Path> sdlProjStream = Files.find(zipfs.getRootDirectories().iterator().next(), MAX_DEPTH,
@@ -289,8 +290,10 @@ public class SDLPPXPackager {
             Files.find(zipfs.getPath(targetLanguage), MAX_DEPTH,
                     (path, basicFileAttributes) -> path.toString().toLowerCase().endsWith(EXT_SDLXLIFF))
                     .forEach(actionPath -> {
-                        Path source = Paths.get(sourceDir.getAbsolutePath(), actionPath.getFileName().toString());
-                        LOGGER.log(Level.INFO, "Copy source file {0} to {1}", new Object[] { actionPath, source });
+                        Path source = Paths.get(sourceDir.getAbsolutePath(),
+                                actionPath.getFileName().toString());
+                        LOGGER.log(Level.INFO, "Copy source file {0} to {1}",
+                                new Object[] { actionPath, source });
                         try {
                             Files.copy(actionPath, source, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
@@ -314,7 +317,8 @@ public class SDLPPXPackager {
                 Files.copy(sdltm, fos);
                 fos.close();
                 String glossaryPrefix = sdlPpx.getFileName().toString().replaceFirst("\\.\\w+$", "");
-                new SDLTBConverter().convertSDLTB(tmpFile, new File(projectDir, GLOSSARY_DIR), glossaryPrefix);
+                new SDLTBConverter().convertSDLTB(tmpFile, new File(projectDir, GLOSSARY_DIR),
+                        glossaryPrefix);
                 tmpFile.delete();
             }
         }
@@ -381,7 +385,8 @@ public class SDLPPXPackager {
                     });
         }
         if (isUpdated) {
-            Path sdlRpx = sdlPpx.resolveSibling(sdlPpx.getFileName().toString().replaceAll("\\.sdlppx$", ".sdlrpx"));
+            Path sdlRpx = sdlPpx
+                    .resolveSibling(sdlPpx.getFileName().toString().replaceAll("\\.sdlppx$", ".sdlrpx"));
             LOGGER.log(Level.INFO, "Renaming {0} to {1}", new Object[] { sdlPpx, sdlRpx });
             Files.move(sdlPpx, sdlRpx, StandardCopyOption.REPLACE_EXISTING);
             return true;
@@ -395,7 +400,8 @@ public class SDLPPXPackager {
             TransformerFactoryConfigurationError, IOException, TransformerException {
 
         final DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-        // Important, the DocumentBuilder must be created with an InputStream, otherwise
+        // Important, the DocumentBuilder must be created with an InputStream,
+        // otherwise
         // the zip can't be updated as the stream is not explicitely closed.
         try (InputStream is = Files.newInputStream(sdlProj, StandardOpenOption.READ)) {
             sdlProjDoc = docBuilder.parse(is);
@@ -403,11 +409,13 @@ public class SDLPPXPackager {
             return false;
         }
 
-        // Language code, obviously we don't deal with multiple target languages.
+        // Language code, obviously we don't deal with multiple target
+        // languages.
         // /PackageProject/LanguageDirections/LanguageDirection/@TargetLanguageCode="fr-FR"
-        targetLanguage = ((Element) ((Element) ((Element) sdlProjDoc.getElementsByTagName("PackageProject").item(0))
-                .getElementsByTagName("LanguageDirections").item(0)).getElementsByTagName("LanguageDirection").item(0))
-                        .getAttribute("TargetLanguageCode");
+        targetLanguage = ((Element) ((Element) ((Element) sdlProjDoc.getElementsByTagName("PackageProject")
+                .item(0)).getElementsByTagName("LanguageDirections").item(0))
+                        .getElementsByTagName("LanguageDirection").item(0))
+                                .getAttribute("TargetLanguageCode");
 
         LOGGER.log(Level.INFO, "Target Language: {0}", targetLanguage);
 
@@ -432,8 +440,9 @@ public class SDLPPXPackager {
         return false;
     }
 
-    private void updateDoc(final Path sdlProj, final Document doc) throws TransformerFactoryConfigurationError,
-            TransformerConfigurationException, IOException, TransformerException {
+    private void updateDoc(final Path sdlProj, final Document doc)
+            throws TransformerFactoryConfigurationError, TransformerConfigurationException, IOException,
+            TransformerException {
         // write the content into xml file
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
@@ -452,8 +461,9 @@ public class SDLPPXPackager {
         });
 
         // https://stackoverflow.com/questions/32353423/can-a-jar-file-be-updated-programmatically-without-rewriting-the-whole-file#32944829
-        try (FileChannel channel = FileChannel.open(tmpSdlProj, StandardOpenOption.WRITE, StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING); OutputStream cos = Channels.newOutputStream(channel)) {
+        try (FileChannel channel = FileChannel.open(tmpSdlProj, StandardOpenOption.WRITE,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                OutputStream cos = Channels.newOutputStream(channel)) {
             StreamResult result = new StreamResult(cos);
             transformer.transform(new DOMSource(doc), result);
 

@@ -1,50 +1,75 @@
 plugins {
-    id 'java-library'
-    id 'maven-publish'
-    id 'eclipse'
-    id 'application'
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
+	id 'eclipse'
+	id 'application'
+	id 'com.diffplug.spotless' version '6.13.0'
+	id 'nebula.release' version '15.3.1'
 }
 
 applicationName = 'SDLPPXPackager'
 mainClassName = 'net.briac.sdlppx.SDLPPXPackager'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
-// In this section you declare where to find the dependencies of your project
 repositories {
-    // Use jcenter for resolving your dependencies.
-    // You can declare any Maven/Ivy/file repository here.
-    jcenter()
+	mavenCentral()
 }
 
 dependencies {
-    // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
-    compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.30.1'
-    // https://mvnrepository.com/artifact/com.healthmarketscience.jackcess/jackcess
-    compile group: 'com.healthmarketscience.jackcess', name: 'jackcess', version: '3.0.1'
-    // https://mvnrepository.com/artifact/commons-cli/commons-cli
-    compile group: 'commons-cli', name: 'commons-cli', version: '1.4'
-    
-    // Use JUnit test framework
-    testImplementation 'junit:junit:4.12'
+	compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.30.1'
+	compile group: 'com.healthmarketscience.jackcess', name: 'jackcess', version: '3.0.1'
+	compile group: 'commons-cli', name: 'commons-cli', version: '1.4'
+
+	// Use JUnit test framework
+	testImplementation 'junit:junit:4.12'
 }
 
 jar {
-    manifest {
-        attributes(
-                //'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-                'Main-Class': mainClassName,
-                'Implementation-Title': applicationName,
-                'Implementation-Version': version
-                )
-    }
+	manifest {
+		attributes(
+				'Main-Class': mainClassName,
+				'Implementation-Title': applicationName,
+				'Implementation-Version': version
+				)
+	}
 }
 
-shadowJar {
-    manifest {
-        inheritFrom project.tasks.jar.manifest
-    }
+
+// https://github.com/diffplug/spotless/tree/main/plugin-gradle
+spotless {
+	// limit format enforcement to just the files changed by this feature branch
+	//ratchetFrom 'origin/main'
+
+	java {
+		eclipse().configFile 'config/eclipse/eclipse-formatting.xml'
+		removeUnusedImports()
+	}
+
+	groovyGradle {
+		target '*.gradle' // default target of groovyGradle
+		greclipse()
+	}
+
+	format 'misc', {
+		target '*.md', '.gitignore'
+		trimTrailingWhitespace()
+		indentWithSpaces()
+		endWithNewline()
+	}
 }
 
+allprojects {
+	tasks.withType(JavaCompile) {
+		options.encoding = 'utf-8'
+		options.deprecation = true
+		//options.compilerArgs << "-Xlint:unchecked"
+	}
+
+	tasks.withType(Test) {
+		systemProperty 'file.encoding', 'utf-8'
+	}
+
+	tasks.withType(JavaExec) {
+		systemProperty 'file.encoding', 'utf-8'
+	}
+}

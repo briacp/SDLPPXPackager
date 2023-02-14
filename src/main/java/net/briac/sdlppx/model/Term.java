@@ -6,7 +6,7 @@ public class Term {
     private String termInfo;
     private String usage;
     // other metadata
-    
+
     public Term(String newword) {
         word = newword;
         termInfo = "";
