@@ -18,8 +18,8 @@ It can work both in command line or with the GUI. When using the CLI, you can us
 
 ## Installation
 
-* To use the GUI: `java -jar SDLPPXPackager-1.2.0-all.jar`
-* To use in CLI: `java -jar SDLPPXPackager-1.2.0-all.jar --project-dir /path/to/project/ /path/to/project.sdl[ppx|tm|tb]`
+* To use the GUI: `bin/SDLPPXPackager`
+* To use in CLI: `bin/SDLPPXPackager --project-dir /path/to/project/ /path/to/project.sdl[ppx|tm|tb]`
 
 ```shell
 usage: SDLPPXPackager [options] --project-dir project_dir sdlppx
