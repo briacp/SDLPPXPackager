@@ -70,14 +70,15 @@ public class SDLTMConverter {
 
             Statement statement = connection.createStatement();
             statement.closeOnCompletion();
-            ResultSet rs = statement.executeQuery("select name, source_language, tucount from translation_memories");
+            ResultSet rs = statement
+                    .executeQuery("select name, source_language, tucount from translation_memories");
             String tmName = rs.getString(1);
             String srcLang = rs.getString(2);
             Integer sdltmCount = rs.getInt(3);
             headerEl.setAttribute("srclang", srcLang);
             if (rs.next()) {
-                LOGGER.log(Level.WARNING, "Multiple source languages in SDLTM, only the first one is used ({0})",
-                        srcLang);
+                LOGGER.log(Level.WARNING,
+                        "Multiple source languages in SDLTM, only the first one is used ({0})", srcLang);
             }
             rs.close();
 
@@ -87,10 +88,10 @@ public class SDLTMConverter {
             int tmxCount = 0;
             while (rs.next()) {
                 Element tu = tmxDoc.createElement("tu");
-                Document sourceXML = docBuilder.parse(
-                        new ByteArrayInputStream(rs.getString("source_segment").getBytes(StandardCharsets.UTF_8)));
-                Document targetXML = docBuilder.parse(
-                        new ByteArrayInputStream(rs.getString("target_segment").getBytes(StandardCharsets.UTF_8)));
+                Document sourceXML = docBuilder.parse(new ByteArrayInputStream(
+                        rs.getString("source_segment").getBytes(StandardCharsets.UTF_8)));
+                Document targetXML = docBuilder.parse(new ByteArrayInputStream(
+                        rs.getString("target_segment").getBytes(StandardCharsets.UTF_8)));
                 tu.appendChild(createTuv(tmxDoc, sourceXML));
                 tu.appendChild(createTuv(tmxDoc, targetXML));
                 bodyEl.appendChild(tu);
@@ -105,9 +106,12 @@ public class SDLTMConverter {
             FileOutputStream fos = new FileOutputStream(tmFile);
             StreamResult result = new StreamResult(fos);
             Transformer transformer = TransformerFactory.newInstance().newTransformer();
-            // Don't indent as it messes up tags in segment (or use xml:space in the tuv?)
-            //transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
-            //transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            // Don't indent as it messes up tags in segment (or use xml:space in
+            // the tuv?)
+            // transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT,
+            // "yes");
+            // transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount",
+            // "2");
             transformer.transform(new DOMSource(tmxDoc), result);
 
         } catch (SQLException e) {
@@ -134,7 +138,8 @@ public class SDLTMConverter {
             if (item.getTagName().equals("Tag")) {
                 String tagType = item.getElementsByTagName("Type").item(0).getTextContent();
                 String tagAnchor = item.getElementsByTagName("Anchor").item(0).getTextContent();
-                String tagAlignmentAnchor = item.getElementsByTagName("AlignmentAnchor").item(0).getTextContent();
+                String tagAlignmentAnchor = item.getElementsByTagName("AlignmentAnchor").item(0)
+                        .getTextContent();
                 Element tagEl;
                 String tagId;
                 switch (tagType) {
@@ -158,7 +163,8 @@ public class SDLTMConverter {
                 }
                 tuv.appendChild(tagEl);
             } else if (item.getTagName().equals("Text")) {
-                tuv.appendChild(tmxDoc.createTextNode(item.getElementsByTagName("Value").item(0).getTextContent()));
+                tuv.appendChild(
+                        tmxDoc.createTextNode(item.getElementsByTagName("Value").item(0).getTextContent()));
             }
         }
 

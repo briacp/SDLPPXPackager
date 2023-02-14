@@ -102,7 +102,8 @@ public class SDLTBConverter {
         BufferedWriter out;
         // Write csv
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile.toString()), "UTF-8"));
+            out = new BufferedWriter(
+                    new OutputStreamWriter(new FileOutputStream(outputFile.toString()), "UTF-8"));
 
             // ========================== write rows =======================
             // for each concept
@@ -117,12 +118,14 @@ public class SDLTBConverter {
                                     .get(languageEntry.getKey()).terms) {
                                 writeCSV(out, storedterm.getWord());
                             }
-//                            // Fill up with empty cells
-//                            for (int i = 0; i < languageEntry.getValue()
-//                                    - conceptEntry.getValue().termGroups.get(languageEntry.getKey()).terms
-//                                            .size(); i++) {
-//                                out.write(outputType.sep + outputType.sep + outputType.sep);
-//                            }
+                            // // Fill up with empty cells
+                            // for (int i = 0; i < languageEntry.getValue()
+                            // -
+                            // conceptEntry.getValue().termGroups.get(languageEntry.getKey()).terms
+                            // .size(); i++) {
+                            // out.write(outputType.sep + outputType.sep +
+                            // outputType.sep);
+                            // }
                         } else if (synonym == Synonym.PIPE) {
                             String termsWithPipes = "";
                             for (Term storedterm : conceptEntry.getValue().termGroups
@@ -139,8 +142,10 @@ public class SDLTBConverter {
                             termsWithPipes = "";
                         }
 
-                        writeCSV(out, conceptEntry.getValue().termGroups.get(languageEntry.getKey()).getDefinition());
-                    } else { // If no terms in given language, fill up with empty cells
+                        writeCSV(out, conceptEntry.getValue().termGroups.get(languageEntry.getKey())
+                                .getDefinition());
+                    } else { // If no terms in given language, fill up with
+                             // empty cells
                         out.write(outputType.sep); // For definition
                         if (synonym == Synonym.COLUMN) {
                             for (int i = 0; i < languageEntry.getValue(); i++) {
@@ -165,7 +170,8 @@ public class SDLTBConverter {
         BufferedWriter out;
         // Write csv
         try {
-            out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile.toString()), "UTF-8"));
+            out = new BufferedWriter(
+                    new OutputStreamWriter(new FileOutputStream(outputFile.toString()), "UTF-8"));
 
             // =================== write first line ====================
             writeCSV(out, "Entry_Created");
@@ -208,7 +214,8 @@ public class SDLTBConverter {
                 // Each language
                 for (Map.Entry<String, Integer> languageEntry : termbase.languages.entrySet()) {
                     if (conceptEntry.getValue().termGroups.get(languageEntry.getKey()) != null) {
-                        writeCSV(out, conceptEntry.getValue().termGroups.get(languageEntry.getKey()).getDefinition());
+                        writeCSV(out, conceptEntry.getValue().termGroups.get(languageEntry.getKey())
+                                .getDefinition());
                         // Write all synonyms in one language
                         if (synonym == Synonym.COLUMN) {
                             for (Term storedterm : conceptEntry.getValue().termGroups
@@ -238,7 +245,8 @@ public class SDLTBConverter {
                             writeCSV(out, termsWithPipes);
                             termsWithPipes = "";
                         }
-                    } else { // If no terms in given language, fill up with empty cells
+                    } else { // If no terms in given language, fill up with
+                             // empty cells
                         out.write(outputType.sep); // For definition
                         if (synonym == Synonym.COLUMN) {
                             for (int i = 0; i < languageEntry.getValue(); i++) {
@@ -291,7 +299,8 @@ public class SDLTBConverter {
             InputSource source = new InputSource(new StringReader(xml));
             document = xmldb.parse(source);
 
-            // ==================== Read entry level data =======================
+            // ==================== Read entry level data
+            // =======================
 
             String entryCreator = xpathExpr.get("entryCreator").evaluate(document);
             String creationTime = xpathExpr.get("creationTime").evaluate(document);
@@ -313,16 +322,20 @@ public class SDLTBConverter {
                 termbase.concepts.get(entryNumber).addMeta(g.getAttribute("type"), g.getTextContent());
             }
 
-            // ================== Read language level data ======================
-            NodeList nodeList = (NodeList) xpathExpr.get("langData").evaluate(document, XPathConstants.NODESET);
-            for (int i = 0; i < nodeList.getLength(); i++) { // For each language group
+            // ================== Read language level data
+            // ======================
+            NodeList nodeList = (NodeList) xpathExpr.get("langData").evaluate(document,
+                    XPathConstants.NODESET);
+            for (int i = 0; i < nodeList.getLength(); i++) { // For each
+                                                             // language group
                 // Read language
                 String lang = xpathExpr.get("lang").evaluate(nodeList.item(i));
                 lang = lang.replaceAll(" ", "_");
                 lang = lang.replaceAll("\\(|\\)", "");
 
                 termbase.concepts.get(entryNumber).addTermgroup(lang);
-                NodeList elements = nodeList.item(i).getChildNodes(); // l, dG, tG
+                NodeList elements = nodeList.item(i).getChildNodes(); // l, dG,
+                                                                      // tG
                 for (int j = 0; j < elements.getLength(); j++) {
                     if (elements.item(j).getNodeName().equals("dG")) {
                         NodeList forbiddenOrDef = elements.item(j).getChildNodes(); // d
@@ -343,10 +356,16 @@ public class SDLTBConverter {
                         Term term = new Term(xpath.evaluate("t", elements.item(j)));
                         termbase.concepts.get(entryNumber).addTerm(term, lang);
 
-                        NodeList terms = elements.item(j).getChildNodes(); // t (term), trG (metadata), dG
-                                                                           // (Usage example)
+                        NodeList terms = elements.item(j).getChildNodes(); // t
+                                                                           // (term),
+                                                                           // trG
+                                                                           // (metadata),
+                                                                           // dG
+                                                                           // (Usage
+                                                                           // example)
 
-                        // ================= Read term level data ===================
+                        // ================= Read term level data
+                        // ===================
                         for (int l = 0; l < terms.getLength(); l++) {
 
                             if (terms.item(l).getNodeName().equals("dG")) {
@@ -367,11 +386,15 @@ public class SDLTBConverter {
         }
 
         // Populate languages
-        for (Map.Entry<Integer, Concept> conceptEntry : termbase.concepts.entrySet()) { // for each concept
-            for (Map.Entry<String, TermGroup> termgroupEntry : conceptEntry.getValue().termGroups.entrySet()) { // for
-                                                                                                                // each
-                                                                                                                // termgroup
-                if (termbase.inLanguageList(termgroupEntry.getKey()) < termgroupEntry.getValue().terms.size()) {
+        for (Map.Entry<Integer, Concept> conceptEntry : termbase.concepts.entrySet()) { // for
+                                                                                        // each
+                                                                                        // concept
+            for (Map.Entry<String, TermGroup> termgroupEntry : conceptEntry.getValue().termGroups
+                    .entrySet()) { // for
+                                   // each
+                                   // termgroup
+                if (termbase.inLanguageList(termgroupEntry.getKey()) < termgroupEntry.getValue().terms
+                        .size()) {
                     termbase.setMaxNumber(termgroupEntry.getKey(), termgroupEntry.getValue().terms.size());
                 }
             }
